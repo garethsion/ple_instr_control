@@ -6,6 +6,7 @@ from toptica.lasersdk.dlcpro.v2_0_3 import DLCpro, SerialConnection, DeviceNotFo
 from toptica.lasersdk.utils.dlcpro import *
 
 import numpy as np
+from contextlib import contextmanager
 
 
 class TopticaDLCPro:
@@ -14,10 +15,26 @@ class TopticaDLCPro:
         self.com_port = com_port
         self.baud_rate = baud_rate
         self.timeout = timeout
+        self.dlc = DLCpro(SerialConnection(self.com_port, self.baud_rate, self.timeout))
+
+    # def __enter__(self):
+    #     print('Entered')
+    #     return self.dlc
+    #
+    # def __exit__(self, type, value, traceback):
+    #     print('Exit')
+    #     return
+
+    # @contextmanager
+    # def dlc(self):
+    #     self.dlc = DLCpro(SerialConnection(self.com_port, self.baud_rate, self.timeout))
+    #     yield self.dlc
+    #     print('Yay')
 
     def set_current(self, set_current):
         with DLCpro(SerialConnection(self.com_port, self.baud_rate, self.timeout)) as dlc:
             dlc.laser1.dl.cc.current_set.set(set_current)
+        # self.dlc.laser1.dl.cc.current_set(set_current)
 
     def get_actual_current(self):
         with DLCpro(SerialConnection(self.com_port, self.baud_rate, self.timeout)) as dlc:

@@ -1,19 +1,39 @@
+"""Class to communicate with the Rohde&Schwarz RTM Oscilloscope.
+"""
+
+from RsInstrument.RsInstrument import RsInstrument
+import time
+
 from matplotlib import pyplot as plt
 import matplotlib as mpl
-
-mpl.rcParams['figure.figsize'] = (10,6)
+mpl.rcParams['figure.figsize'] = (10, 6)
 mpl.rcParams['figure.frameon'] = True
 mpl.rcParams['lines.linewidth'] = 2.0
 mpl.rcParams['font.size'] = 18
 mpl.rcParams['legend.frameon'] = False
 mpl.rcParams['legend.fontsize'] = 16
 
-from RsInstrument.RsInstrument import RsInstrument
-import time
-
 
 class Oscope:
+    """Communicate with a Rohde & Schwarz RTM Oscilloscope.
+
+    Author      : Gareth Sion Jones
+    Affiliation : University of Oxford
+    Date        : July, 2022
+
+    Example:
+        >>> oscope = Oscope.Oscope(resource_string, optstr) # Instantiate object with eresource string and options string
+        >>> oscope.setup_trace(channel='CHAN1', time_scale=0.001, volt_scale=0.02, pos=-2.5) # setup oscope trace
+        >>> trace = oscope.get_trace(channel='CHAN1', plotting=True) # return trace data
+
+    """
+
     def __init__(self, resource_string='USB', optstr=''):
+        """Initialize the oscilloscope
+
+        :param resource_string : name of com port resource
+        :param optstr : string of options to pass to the RSInstrument
+        """
         self.instr = RsInstrument(resource_string, True, True, optstr)
         self.instr.timeout = 3000
         self.instr.write_str("CHAN1:STAT OFF")
@@ -66,7 +86,6 @@ class Oscope:
         offs = ch_offs - ch_pos * ch_scale
 
     def get_trace(self, channel='CHAN1', plotting=True):
-
         # get ASCII data
         start = time.time()
         self.instr.write_str("FORM:DATA ASC")
