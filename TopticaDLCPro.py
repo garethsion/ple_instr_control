@@ -69,7 +69,10 @@ class TopticaDLCPro:
     def set_temperature(self, temp_set=20.2):
         with DLCpro(SerialConnection(self.com_port, self.baud_rate, self.timeout)) as dlc:
             dlc.laser1.dl.tc.temp_set.set(temp_set)
-            print('Actual Temperature = {:.8f} deg C'.format(dlc.laser1.dl.tc.temp_act.get()))
+
+    def get_temperature(self):
+        with DLCpro(SerialConnection(self.com_port, self.baud_rate, self.timeout)) as dlc:
+            return dlc.laser1.dl.tc.temp_act.get()
 
     def enable_temp_control(self, enabled=True):
         with DLCpro(SerialConnection(self.com_port, self.baud_rate, self.timeout)) as dlc:
