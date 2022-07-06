@@ -74,6 +74,10 @@ class TopticaDLCPro:
         with DLCpro(SerialConnection(self.com_port, self.baud_rate, self.timeout)) as dlc:
             return dlc.laser1.dl.tc.temp_act.get()
 
+    def get_feedforward(self):
+        with DLCpro(SerialConnection(self.com_port, self.baud_rate, self.timeout)) as dlc:
+            return dlc.laser1.dl.cc.feedforward_factor.get()
+
     def enable_temp_control(self, enabled=True):
         with DLCpro(SerialConnection(self.com_port, self.baud_rate, self.timeout)) as dlc:
             dlc.laser1.dl.tc.enabled.set(enabled)
