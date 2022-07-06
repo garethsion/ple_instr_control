@@ -1,12 +1,4 @@
-import sys
-
-import matplotlib.pyplot as pyplot
-import exception
 from toptica.lasersdk.dlcpro.v2_0_3 import DLCpro, SerialConnection, DeviceNotFoundError
-from toptica.lasersdk.utils.dlcpro import *
-
-import numpy as np
-from contextlib import contextmanager
 
 
 class TopticaDLCPro:
@@ -33,20 +25,6 @@ class TopticaDLCPro:
         self.baud_rate = baud_rate
         self.timeout = timeout
         self.dlc = DLCpro(SerialConnection(self.com_port, self.baud_rate, self.timeout))
-
-    # def __enter__(self):
-    #     print('Entered')
-    #     return self.dlc
-    #
-    # def __exit__(self, type, value, traceback):
-    #     print('Exit')
-    #     return
-
-    # @contextmanager
-    # def dlc(self):
-    #     self.dlc = DLCpro(SerialConnection(self.com_port, self.baud_rate, self.timeout))
-    #     yield self.dlc
-    #     print('Yay')
 
     @property
     def com_port(self):
@@ -75,12 +53,11 @@ class TopticaDLCPro:
     def set_current(self, set_current):
         """Set the current of the Toptica laser
 
-        :param set_current : intended injection current
-        :returns : set_current (float)
+        :param set_current (int, float): intended injection current
         """
         try:
             with DLCpro(SerialConnection(self.com_port, self.baud_rate, self.timeout)) as dlc:
-                return dlc.laser1.dl.cc.current_set.set(set_current)
+                dlc.laser1.dl.cc.current_set.set(set_current)
         except ConnectionError as e:
             print("Couldn't connect to the Toptica controller")
             print(e)
@@ -88,6 +65,10 @@ class TopticaDLCPro:
         # self.dlc.laser1.dl.cc.current_set(set_current)
 
     def get_actual_current(self):
+        """Get the current measured by the Toptica laser
+
+        :returns : actual current measured by Toptica (float)
+        """
         try:
             with DLCpro(SerialConnection(self.com_port, self.baud_rate, self.timeout)) as dlc:
                 return dlc.laser1.dl.cc.current_act.get()
@@ -106,6 +87,32 @@ class TopticaDLCPro:
             print("Couldn't connect to the Toptica controller")
             print(e)
 
+    def set_feedforward(self, ffwd):
+        """Set the feedforward factor of the Toptica laser
+
+        :param ffwd (float): intended feedforward factorinjection current
+        """
+        if not isinstance(ffwd, (int, float)):
+            raise ValueError('The ffwd argument must be of int or float type')
+        try:
+            with DLCpro(SerialConnection(self.com_port, self.baud_rate, self.timeout)) as dlc:
+                dlc.laser1.dl.cc.feedforward_factor.set(ffwd)
+        except ConnectionError as e:
+            print("Couldn't connect to the Toptica controller")
+            print(e)
+
+    def get_feedforward(self):
+        """Get the actual feedforward factor of the Toptica controller
+
+        :returns : actual feedforward factor measured by Toptica (float)
+        """
+        try:
+            with DLCpro(SerialConnection(self.com_port, self.baud_rate, self.timeout)) as dlc:
+                return dlc.laser1.dl.cc.feedforward_factor.get()
+        except ConnectionError as e:
+            print("Couldn't connect to the Toptica controller")
+            print(e)
+
     def enable_feedforward(self, enabled=True):
         if not isinstance(enabled, bool):
             raise ValueError('The enabled argument must be of boolean type')
@@ -117,12 +124,37 @@ class TopticaDLCPro:
             print("Couldn't connect to the Toptica controller")
             print(e)
 
-    def set_feedforward(self, ffwd):
-        if not isinstance(ffwd, (int, float)):
-            raise ValueError('The ffwd argument must be of int or float type')
+    def set_temperature(self, temp_set=20.2):
+        """Set the feedforward factor of the Toptica laser
+
+        :param temp_set (float): intended case temperature setting of the Toptica laser
+        """
         try:
             with DLCpro(SerialConnection(self.com_port, self.baud_rate, self.timeout)) as dlc:
-                dlc.laser1.dl.cc.feedforward_factor.set(ffwd)
+                dlc.laser1.dl.tc.temp_set.set(temp_set)
+        except ConnectionError as e:
+            print("Couldn't connect to the Toptica controller")
+            print(e)
+
+    def get_temperature(self):
+        """Get the actual case temperature of the Toptica laser
+
+        :returns : actual temperature measured by Toptica (float)
+        """
+        try:
+            with DLCpro(SerialConnection(self.com_port, self.baud_rate, self.timeout)) as dlc:
+                return dlc.laser1.dl.tc.temp_act.get()
+        except ConnectionError as e:
+            print("Couldn't connect to the Toptica controller")
+            print(e)
+
+    def enable_temp_control(self, enabled=True):
+        if not isinstance(enabled, bool):
+            raise ValueError('The enabled argument must be of boolean type')
+        try:
+            with DLCpro(SerialConnection(self.com_port, self.baud_rate, self.timeout)) as dlc:
+                dlc.laser1.dl.tc.enabled.set(enabled)
+                print('Temp control enabled' if enabled else 'Temp control disabled')
         except ConnectionError as e:
             print("Couldn't connect to the Toptica controller")
             print(e)
@@ -145,41 +177,6 @@ class TopticaDLCPro:
             with DLCpro(SerialConnection(self.com_port, self.baud_rate, self.timeout)) as dlc:
                 dlc.laser1.scan.enabled.set(enabled)
                 print('Scan enabled' if enabled else 'Scan disabled')
-        except ConnectionError as e:
-            print("Couldn't connect to the Toptica controller")
-            print(e)
-
-    def set_temperature(self, temp_set=20.2):
-        try:
-            with DLCpro(SerialConnection(self.com_port, self.baud_rate, self.timeout)) as dlc:
-                dlc.laser1.dl.tc.temp_set.set(temp_set)
-        except ConnectionError as e:
-            print("Couldn't connect to the Toptica controller")
-            print(e)
-
-    def get_temperature(self):
-        try:
-            with DLCpro(SerialConnection(self.com_port, self.baud_rate, self.timeout)) as dlc:
-                return dlc.laser1.dl.tc.temp_act.get()
-        except ConnectionError as e:
-            print("Couldn't connect to the Toptica controller")
-            print(e)
-
-    def get_feedforward(self):
-        try:
-            with DLCpro(SerialConnection(self.com_port, self.baud_rate, self.timeout)) as dlc:
-                return dlc.laser1.dl.cc.feedforward_factor.get()
-        except ConnectionError as e:
-            print("Couldn't connect to the Toptica controller")
-            print(e)
-
-    def enable_temp_control(self, enabled=True):
-        if not isinstance(enabled, bool):
-            raise ValueError('The enabled argument must be of boolean type')
-        try:
-            with DLCpro(SerialConnection(self.com_port, self.baud_rate, self.timeout)) as dlc:
-                dlc.laser1.dl.tc.enabled.set(enabled)
-                print('Temp control enabled' if enabled else 'Temp control disabled')
         except ConnectionError as e:
             print("Couldn't connect to the Toptica controller")
             print(e)
