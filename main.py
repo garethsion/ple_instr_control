@@ -38,22 +38,23 @@ def run():
     toptica.enable_temp_control(enabled=True)
 
     # Define iterables
-    temperatures = np.arange(16, 26, 2)
+    temperatures = np.arange(18, 26, 2)
     currents = np.arange(63, 148, 1)
-    feedfwrds = np.arange(-0.9, 0, 0.01)
+    feedfwrds = np.arange(-0.9, 0, 0.05)
     scan_volts = np.arange(10, 35, 1)
     scan_offs = np.arange(10, 90, 1)
 
     # Dataframe for collecting all data from sweep
-    df = pd.DataFrame(columns=['Iset', 'Iact', 'Vmax', 'wlen_mean', 'Power', 'trace'])
+    df = pd.DataFrame()
 
     for temp in temperatures:
-        toptica.set_temperature(temp)
+        toptica.set_temperature(float(temp))
+        print('Setting case temperature to {:.2f}'.format(temp))
         actual_temp = toptica.get_temperature()
-        time.sleep(2400)  # Wait four minutes for temperature to stabilize.
+        time.sleep(240)  # Wait four minutes for temperature to stabilize.
         for sv in scan_volts:
             for so in scan_offs:
-                toptica.set_scan(amplitude=sv, offset=so, freq=0.2, shape=1)
+                toptica.set_scan(amplitude=float(sv), offset=float(so), freq=0.2, shape=1)
                 for i in currents:
                     toptica.set_current(int(i))
                     Iact = toptica.get_actual_current()
@@ -67,27 +68,31 @@ def run():
                         f = []  # frequencies from wavemeter
                         t = []  # time from wavemeter
                         pwr_met = []  # power from Thorlabs power meter
+                        pc_volts = []
+
+                        print('Acquiring traces....')
                         for j in range(300):
                             wl.append(wlm.wavelengths[0])
                             f.append(wlm.frequencies[0])
                             wlm_pwrs.append(wlm.powers[0])
-                            time.sleep(0.05)
-                            t.append(i * 0.1)
+                            # pc_volts.append(toptica.get_pc_voltage())
+                            time.sleep(0.02)
+                            t.append(i * 0.02)
                             pwr_met.append(power_meter.read)
+                            # print(wl)
 
-                        print('Set temperature = {:.4f} C'.format(max(trace)))
+                        print('Set temperature = {:.4f} C'.format(temp))
                         print('Set scan voltage = {:.2f} V'.format(sv))
                         print('Set scan offset = {:.2f} V'.format(so))
                         print('Set current = {:.2f} mA'.format(i))
                         print('Set feedforward = {:.2f}'.format(ffwd))
                         print('\n')
-
                         df = df.append(pd.DataFrame(data={'temp_set': [temp],
-                                                          'temp_act': [actual_temp]
+                                                          'temp_act': [actual_temp],
                                                           'scan_voltage': [sv],
                                                           'scan_offset': [so],
                                                           'Iset': [i],
-                                                          'Iact':  [Iact]
+                                                          'Iact':  [Iact],
                                                           'power_meter': [pwr_met],
                                                           'feedfwd':[ffwd],
                                                           'trace': [trace],
@@ -99,14 +104,6 @@ def run():
     toptica.set_current(60)
     toptica.enable_current(enabled=False)
     toptica.set_temperature(20)
-
-    # df = pd.DataFrame(data={'Iset':currents,
-    #                         'Iact':act_current,
-    #                         'Vmax':max_trace,
-    #                         'wlen_mean':mean_wlen,
-    #                         'Power':powers})
-    # df.to_csv('data.csv')
-
 
 if __name__ == '__main__':
     run()

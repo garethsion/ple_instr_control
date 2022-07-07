@@ -14,7 +14,7 @@ class TopticaDLCPro:
         >>> toptica.enable_current(True) # Enable current emission
     """
 
-    def __init__(self, com_port, baud_rate, timeout):
+    def __init__(self, com_port='COM1', baud_rate=115200, timeout=5):
         """Initialize the laser controller
 
         :param com_port : name of com port
@@ -27,28 +27,28 @@ class TopticaDLCPro:
         self.dlc = DLCpro(SerialConnection(self.com_port, self.baud_rate, self.timeout))
 
     @property
-    def com_port(self):
+    def comport(self):
         return self.com_port
 
-    @com_port.setter
-    def com_port(self, com_port):
-        self.com_port = com_port
+    @comport.setter
+    def comport(self, comport):
+        self.com_port = comport
 
     @property
-    def baud_rate(self):
+    def baudrate(self):
         return self.baud_rate
 
-    @baud_rate.setter
-    def baud_rate(self, baud_rate):
-        self.baud_rate = baud_rate
+    @baudrate.setter
+    def baudrate(self, baudrate):
+        self.baud_rate = baudrate
 
     @property
-    def timeout(self):
+    def tout(self):
         return self.timeout
 
-    @timeout.setter
-    def timeout(self, timeout):
-        self.timeout = timeout
+    @tout.setter
+    def tout(self, tout):
+        self.timeout = tout
 
     def set_current(self, set_current):
         """Set the current of the Toptica laser
@@ -177,6 +177,18 @@ class TopticaDLCPro:
             with DLCpro(SerialConnection(self.com_port, self.baud_rate, self.timeout)) as dlc:
                 dlc.laser1.scan.enabled.set(enabled)
                 print('Scan enabled' if enabled else 'Scan disabled')
+        except ConnectionError as e:
+            print("Couldn't connect to the Toptica controller")
+            print(e)
+
+    def get_pc_voltage(self):
+        """Get the actual piezo voltage of the Toptica laser
+
+        :returns : actual voltage measured by Toptica (float)
+        """
+        try:
+            with DLCpro(SerialConnection(self.com_port, self.baud_rate, self.timeout)) as dlc:
+                return dlc.laser1.dl.pc.voltage_act.get()
         except ConnectionError as e:
             print("Couldn't connect to the Toptica controller")
             print(e)
