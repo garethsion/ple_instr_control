@@ -1,6 +1,4 @@
-import Oscope
-import TopticaDLCPro
-import ThorlabsPowerMeter as pm
+from src import Oscope, ThorlabsPowerMeter as pm, TopticaDLCPro
 from high_finesse_ws6.src.high_finesse import WavelengthMeter
 
 import datetime as dt
