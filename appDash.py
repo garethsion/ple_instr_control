@@ -49,7 +49,10 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.CYBORG], long_callbac
 
 app.layout = html.Div(
     [
-        dbc.Row(dbc.Col(html.Div([
+        dbc.Row(html.Div(html.H1('Laser Stabilisation Control', style={'textAlign': 'center'}))),
+        dbc.Row(
+            [
+            dbc.Col(html.Div([
             dcc.Graph(id = 'live-graph-1',
                   animate = False),
             dcc.Interval(
@@ -57,7 +60,9 @@ app.layout = html.Div(
                 interval=20,
                 n_intervals=0
             )]
-        ), width=8)),
+        ), width=8),
+            dbc.Col(html.Div(html.H5('Hello')))
+            ]),
         dbc.Row([
             dbc.Col(html.Div([
                 dcc.Graph(id='live-graph-2',
@@ -78,7 +83,6 @@ app.layout = html.Div(
         ])
     ]
 )
-
 
 @app.callback(
     Output('live-graph-1', 'figure'),
@@ -147,7 +151,7 @@ def update_trace(n):
             x=list(Xtrace),
             y=list(Ytrace),
             name='Scatter',
-            mode='lines+markers'
+            mode='lines'
     )
 
     return {'data': [data],
