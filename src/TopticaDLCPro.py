@@ -62,6 +62,19 @@ class TopticaDLCPro:
             print("Couldn't connect to the Toptica controller")
             print(e)
 
+    def get_current(self):
+        """Get the set current of the Toptica laser
+
+        :param get_current (int, float): intended injection current
+        :returns set current (float)
+        """
+        try:
+            with DLCpro(SerialConnection(self.com_port, self.baud_rate, self.timeout)) as dlc:
+                return dlc.laser1.dl.cc.current_set.get()
+        except ConnectionError as e:
+            print("Couldn't connect to the Toptica controller")
+            print(e)
+
         # self.dlc.laser1.dl.cc.current_set(set_current)
 
     def get_actual_current(self):

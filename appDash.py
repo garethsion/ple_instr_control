@@ -28,7 +28,7 @@ resource_string = 'USB0::0x0AAD::0x010F::100899::INSTR'
 optstr = "AddTermCharToWriteBinBLock=True, TerminationCharacter='\n',AssureWriteWithTermChar=True, WriteDelay=20, ReadDelay=5"
 
 oscope = Oscope(resource_string, optstr)
-# oscope.setup_trace(channel='CHAN2', time_scale=0.05, volt_scale=0.08, pos=0)
+oscope.setup_trace(channel='CHAN2', time_scale=0.05, volt_scale=0.08, pos=0)
 
 ###################################
 #### DECLARE INITIAL VARIABLES ####
@@ -42,6 +42,10 @@ Xpwr = deque(maxlen=600)
 Xpwr.append(1)
 Ypwr = deque(maxlen=600)
 Ypwr.append(wlm.powers[0])
+
+# wlen_df = pd.DataFrame()
+
+store_wlen = Ypwr
 
 ###################
 #### SETUP APP ####
@@ -57,18 +61,20 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.CYBORG], long_callbac
 
 Row1 = dbc.Row(html.Div(html.H1('Laser Stabilisation Control', style={'textAlign': 'center'})))
 Row2 = dbc.Row([dbc.Col(html.Div([dcc.Graph(id='live-graph-1', animate=False),
-                                  dcc.Interval(id='graph-update-1', interval=20, n_intervals=0),
-                                  dcc.Store(id='store-wlen')]), width=8),
-                dbc.Col(html.Div(html.H5('Hello')))
-                # dbc.Col(html.Div(dcc.Graph(id='fit-graph', animate='False')))
+                                  dcc.Interval(id='graph-update-1', interval=20, n_intervals=0)
+                                  ]), width=8),
+                dbc.Col(html.Div([dcc.Graph(id='fit-graph', animate=False),
+                                  dcc.Interval(id='fit-graph-interval', interval=40, n_intervals=0)
+                                  ]), width=4)
         ])
 Row3 = dbc.Row([dbc.Col(html.Div([dcc.Graph(id='live-graph-2', animate=False),
                                   dcc.Interval(id='graph-update-2', interval=20, n_intervals=0)]), width=4),
                 dbc.Col(html.Div([dcc.Graph(id='live-graph-3', animate=False),
-                                  dcc.Interval(id='graph-update-3', interval=6000, n_intervals=0)]), width=4)
+                                  dcc.Interval(id='graph-update-3', interval=1000, n_intervals=0)]), width=4)
         ])
 
 container = [Row1, Row2, Row3]
+
 
 app.layout = html.Div(
     container
@@ -84,6 +90,9 @@ app.layout = html.Div(
     [Input('graph-update-1', 'n_intervals')],
 )
 def update_wavemeter(n):
+    # global Xwlen
+    # global Ywlen
+
     Xwlen.append(Xwlen[-1]+1)
     Ywlen.append(wlm.wavelengths[0])
 
@@ -94,6 +103,9 @@ def update_wavemeter(n):
             mode='lines+markers'
     )
 
+    wlen_df = pd.DataFrame(data={'x': Xwlen, 'y': Ywlen})
+    wlen_df.to_csv('output/temp/~wlen.csv')
+
     return {'data': [data],
             'layout': go.Layout(xaxis=dict(range=[min(Xwlen), max(Xwlen)]),
                                  yaxis=dict(range=[min(Ywlen), max(Ywlen)]),
@@ -102,20 +114,6 @@ def update_wavemeter(n):
                                  paper_bgcolor='rgba(0,0,0,0)',
                                  plot_bgcolor='rgba(0,0,0,0)'
                     )}
-
-
-@app.callback(
-    Output('store-wlen', 'data'),
-    [Input('graph-input-2', 'n_intervals')],
-)
-def store_wavemeter(n):
-    Xwlen.append(Xwlen[-1]+1)
-    Ywlen.append(wlm.wavelengths[0])
-
-    data = pd.DataFrame(data={'x': Xwlen, 'y': Ywlen})
-
-    return data.to_json()
-
 
 @app.callback(
     Output('live-graph-2', 'figure'),
@@ -150,8 +148,6 @@ def update_trace(n):
     # oscope.setup_trace(channel='CHAN2', time_scale=0.05, volt_scale=0.08, pos=0)
     trace = oscope.get_trace(channel='CHAN2', plotting=False)
 
-    # Xpwr.append(Xwlen[-1]+1)
-    # Ypwr.append(wlm.powers[0])
     Xtrace = np.linspace(0, len(trace), len(trace))
     Ytrace = trace
 
@@ -171,34 +167,30 @@ def update_trace(n):
                                  plot_bgcolor='rgba(0,0,0,0)'
                     )}
 
-
 @app.callback(
     Output('fit-graph', 'figure'),
-    [Input('store-wlen', 'data') ]
+    [Input('fit-graph-interval', 'n_intervals')],
 )
-def plot_fit(json_data):
-    df = pd.read_json(json_data)
-    print(df)
-    return
-    # Xpwr.append(Xwlen[-1]+1)
-    # Ypwr.append(wlm.powers[0])
-    #
-    # data = plotly.graph_objs.Scatter(
-    #         x=list(Xpwr),
-    #         y=list(Ypwr),
-    #         name='Scatter',
-    #         mode='lines+markers'
-    # )
-    #
-    # return {'data': [data],
-    #         'layout': go.Layout(xaxis=dict(range=[min(Xpwr),max(Xpwr)]),
-    #                              yaxis=dict(range=[min(Ypwr),max(Ypwr)]),
-    #                              title='Wavemeter Power', xaxis_title='', yaxis_title='Power (uW)',
-    #                              font=dict(color='white'),
-    #                              paper_bgcolor='rgba(0,0,0,0)',
-    #                              plot_bgcolor='rgba(0,0,0,0)'
-    #                 )}
+def update_wavemeter(n):
+    data = pd.read_csv('output/temp/~wlen.csv')
+    Xfit = data['x']
+    Yfit = data['y']
 
+    data = plotly.graph_objs.Scatter(
+            x=Xfit,
+            y=Yfit,
+            name='Scatter',
+            mode='lines+markers'
+    )
+
+    return {'data': [data],
+            'layout': go.Layout(xaxis=dict(range=[min(Xfit), max(Xfit)]),
+                                 yaxis=dict(range=[min(Yfit), max(Yfit)]),
+                                 title='Wavemeter', xaxis_title='', yaxis_title='Wavelength (nm)',
+                                 font=dict(color='white'),
+                                 paper_bgcolor='rgba(0,0,0,0)',
+                                 plot_bgcolor='rgba(0,0,0,0)'
+                    )}
 
 if __name__ == '__main__':
     app.run_server()
